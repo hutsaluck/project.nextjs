@@ -8,9 +8,12 @@ import {IUserLogin} from "@/models/IUserLogin";
 
 export const loginUser = async (data: IUserLogin) => {
     const user: IUserWithTokens = await login({...data, expiresInMins: 1})
-    revalidatePath('/')
-    redirect(`/users/${user.id}`);
+    // console.log(user);
+    // revalidatePath('/')
+    // redirect(`/users/${user.id}`);
+    redirect(`/users`);
 }
+
 export const logoutUser = async () => {
     await logout()
     revalidatePath('/')

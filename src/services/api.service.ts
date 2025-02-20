@@ -1,13 +1,12 @@
-'use client'
+'use server'
 
 import axios from "axios";
 import {IUserWithTokens} from "@/models/IUserWithTokens";
-import {retriveLocalStorage} from "@/services/helpers";
+import {getServerStorage, removeServerStorage, setServerStorage} from "@/services/helpers";
 import {IRecipe} from "@/models/IRecipe";
 import {IBaseResponseModel} from "@/models/IBaseResponseModel";
 import {IUser} from "@/models/IUser";
 import {ITokenPair} from "@/models/ITokenPair";
-import {logoutUser} from "@/server-actions/serverActions";
 
 type LoginData = {
     username: string
@@ -18,25 +17,58 @@ type LoginData = {
 const axiosInstance = axios.create({
     baseURL: "https://dummyjson.com/auth",
     headers: {},
-    withCredentials: true,
-})
+});
 
-axiosInstance.interceptors.request.use((requestObject) => {
-    if (requestObject.method?.toUpperCase() === 'GET') {
-        requestObject.headers.Authorization = `Bearer ${retriveLocalStorage<IUserWithTokens>('user').accessToken}`;
+axiosInstance.interceptors.request.use(async (requestObject) => {
+    const user = await getServerStorage<IUserWithTokens>('user');
+    if (requestObject.method?.toUpperCase() === 'GET' && user?.accessToken) {
+        requestObject.headers.Authorization = `Bearer ${user.accessToken}`;
     }
-    return requestObject
-})
+    return requestObject;
+});
 
-export const login = async ({username, password, expiresInMins}: LoginData): Promise<IUserWithTokens> => {
-    const {data: userWithTokens} = await axiosInstance.post<IUserWithTokens>("/login", {
-        username,
-        password,
-        expiresInMins
-    })
-    localStorage.setItem("user", JSON.stringify(userWithTokens));
-    return userWithTokens
-}
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                // Оновлення токену
+                const user = await getServerStorage<IUserWithTokens>("user");
+                console.log(user);
+                console.log("Current refreshToken:", user?.refreshToken); // Логування refreshToken
+
+                if (user?.refreshToken) {
+                    // Оновлюємо токен через refresh()
+                    const updatedUser = await refresh();
+
+                    // Після оновлення отримуємо нові токени
+                    // const updatedUser = getServerStorage<IUserWithTokens>("user");
+                    console.log("Updated accessToken:", updatedUser?.accessToken); // Логування нового accessToken
+
+                    if (updatedUser?.accessToken) {
+                        originalRequest.headers.Authorization = `Bearer ${updatedUser.accessToken}`;
+                        return axiosInstance(originalRequest); // Повторно відправляємо запит
+                    } else {
+                        console.error("No accessToken found after refresh.");
+                    }
+                } else {
+                    console.error("No refreshToken available.");
+                }
+            } catch (err) {
+                console.error('Error during token refresh:', err);
+                return Promise.reject(error); // Повертаємо помилку, якщо не вдалося оновити токен
+            }
+        }
+
+        // Якщо статус не 401 або повторна спроба вже була зроблена, передаємо помилку далі
+        return Promise.reject(error);
+    }
+);
+
 
 export const loadAuthRecipes = async (): Promise<IRecipe[]> => {
     const recipes: IRecipe[] = [];
@@ -109,8 +141,18 @@ export const getUserBySearchQuery = async (searchQuery: string): Promise<IBaseRe
     return data;
 }
 
-export const refresh = async (): Promise<void> => {
-    const userWithTokens = retriveLocalStorage<IUserWithTokens>("user");
+export const login = async ({username, password, expiresInMins}: LoginData): Promise<IUserWithTokens> => {
+    const {data: userWithTokens} = await axiosInstance.post<IUserWithTokens>("/login", {
+        username,
+        password,
+        expiresInMins
+    })
+    setServerStorage<IUserWithTokens>("user", userWithTokens);
+    return userWithTokens
+}
+
+export const refresh = async (): Promise<IUserWithTokens> => {
+    const userWithTokens = await getServerStorage<IUserWithTokens>("user");
     const {
         data: {
             accessToken,
@@ -122,9 +164,11 @@ export const refresh = async (): Promise<void> => {
     });
     userWithTokens.accessToken = accessToken;
     userWithTokens.refreshToken = refreshToken;
-    localStorage.setItem("user", JSON.stringify(userWithTokens));
+    setServerStorage<IUserWithTokens>("user", userWithTokens);
+
+    return userWithTokens;
 }
 
 export const logout = async (): Promise<void> => {
-    localStorage.removeItem('user');
+    removeServerStorage('user');
 }

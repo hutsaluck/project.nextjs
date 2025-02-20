@@ -16,7 +16,7 @@ export const LoginComponent = () => {
     const [message, setMessage] = useState<boolean>(false)
 
     const loginHandler = async (data: IUserLogin) => {
-        await loginUser(data)
+        await loginUser(data);
         setMessage(true)
         reset()
         setTimeout(() => {

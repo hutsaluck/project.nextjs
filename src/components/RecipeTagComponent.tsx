@@ -1,4 +1,4 @@
-import {redirect} from "next/navigation";
+import Link from "next/link";
 
 interface RecipeTagComponentProps {
     tag: string,
@@ -7,15 +7,10 @@ interface RecipeTagComponentProps {
 
 export const RecipeTagComponent = ({tag, index}: RecipeTagComponentProps) => {
     return (
-        <span
-            onClick={() => {
-                if (!location.pathname.includes('recipes')) {
-                    redirect(`/recipes/tag/${tag}`)
-                }
-            }}
+        <Link href={`/recipes/tag/${tag}`}
             className="bg-gray-400 rounded-2xl py-1 px-3 text-white text-center cursor-pointer transition-shadow duration-500 hover:shadow-lg"
             key={index}>
             #{tag}
-        </span>
+        </Link>
     )
 };

@@ -19,7 +19,6 @@ export const RecipeComponent = ({recipe}: RecipeComponentProps) => {
             </Link>
             <div className="p-4">
                 <Link href={`/recipes/${recipe.id}`}>
-
                     <h3 className="text-lg font-semibold text-gray-800">{recipe.name}</h3>
                 </Link>
                 <h4 className="text-base font-semibold text-gray-800 my-2">Tags:</h4>

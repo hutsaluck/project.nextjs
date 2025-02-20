@@ -11,7 +11,7 @@ export const UserComponent = ({user}: IUserProps) => {
             <div
                 className="overflow-hidden my-10 border border-gray-300 rounded-2xl grid justify-center items-center cursor-pointer transition-shadow duration-500 hover:shadow-lg">
                 <div className="overflow-hidden rounded-t-2xl h-64 w-full">
-                    <Image
+                    <img
                         src={user.image}
                         alt={user.username}
                         className="w-full h-full object-cover rounded-t-2xl transition-transform duration-500 hover:scale-110"

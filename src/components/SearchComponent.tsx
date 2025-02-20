@@ -1,3 +1,5 @@
+'use client'
+
 import {SearchIcon} from "@/icons/SearchIcon";
 import {setSearchQuery} from "@/server-actions/serverActions";
 import React from "react";

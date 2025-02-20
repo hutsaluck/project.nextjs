@@ -1,12 +1,10 @@
-'use client'
-
 import {HomeComponent} from "@/components/HomeComponent";
 import {MenuComponent} from "@/components/MenuComponent";
-import {retriveLocalStorage} from "@/services/helpers";
+import {getServerStorage} from "@/services/helpers";
 import {IUserWithTokens} from "@/models/IUserWithTokens";
 
-export default function Home() {
-    const userWithTokens = retriveLocalStorage<IUserWithTokens>("user");
+export default async function Home() {
+    const userWithTokens = await getServerStorage<IUserWithTokens>("user");
     return (
         <>
             <MenuComponent/>

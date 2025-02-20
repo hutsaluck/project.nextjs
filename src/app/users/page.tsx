@@ -15,11 +15,14 @@ const UsersPage = async ({ searchParams }: Props) => {
     const {page, search} = await searchParams;
     const currentPage = Number(page) || 1;
 
-    const searchQuery = Array.isArray(search) ? search[0] : search;
     let data: IBaseResponseModel = await getAllUsersWithPagination(currentPage);
-    if(searchQuery){
-        data = await getAllUsersWithPaginationAndSearch(currentPage, searchQuery);
+    if(search){
+        const searchQuery = Array.isArray(search) ? search[0] : search;
+        if(searchQuery){
+            data = await getAllUsersWithPaginationAndSearch(currentPage, searchQuery);
+        }
     }
+
     const {users, total} = data
 
     return (

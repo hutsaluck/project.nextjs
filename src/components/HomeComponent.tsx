@@ -15,7 +15,7 @@ export const HomeComponent = ({user}: Props) => {
                 </h1>
                 {user && (
                     <p className="text-base md:text-lg text-gray-600">
-                        Hi, {user.firstName}!
+                        Hi, {user.username}!
                     </p>
                 )}
                 {!user && (

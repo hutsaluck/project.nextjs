@@ -1,10 +1,9 @@
 'use client'
 
-import { IUserWithTokens } from "@/models/IUserWithTokens";
+import {IUserWithTokens} from "@/models/IUserWithTokens";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useRouter } from 'next/router';
-import { logoutUser } from "@/server-actions/serverActions";
+import {useEffect, useState} from "react";
+import {logoutUser} from "@/server-actions/serverActions";
 import MenuIcon from "@/icons/MenuIcon";
 import {CloseIcon} from "@/icons/CloseIcon";
 

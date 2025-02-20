@@ -10,7 +10,7 @@ export const RecipeTagComponent = ({tag, index}: RecipeTagComponentProps) => {
         <span
             onClick={() => {
                 if (!location.pathname.includes('recipes')) {
-                    redirect(`/recipes/${tag}`)
+                    redirect(`/recipes/tag/${tag}`)
                 }
             }}
             className="bg-gray-400 rounded-2xl py-1 px-3 text-white text-center cursor-pointer transition-shadow duration-500 hover:shadow-lg"

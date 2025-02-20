@@ -7,6 +7,7 @@ import {IRecipe} from "@/models/IRecipe";
 import {IBaseResponseModel} from "@/models/IBaseResponseModel";
 import {IUser} from "@/models/IUser";
 import {ITokenPair} from "@/models/ITokenPair";
+import {logoutUser} from "@/server-actions/serverActions";
 
 type LoginData = {
     username: string
@@ -122,4 +123,8 @@ export const refresh = async (): Promise<void> => {
     userWithTokens.accessToken = accessToken;
     userWithTokens.refreshToken = refreshToken;
     localStorage.setItem("user", JSON.stringify(userWithTokens));
+}
+
+export const logout = async (): Promise<void> => {
+    localStorage.removeItem('user');
 }

@@ -11,7 +11,11 @@
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.1.7"
+    "next": "15.1.7",
+    "axios": "^1.7.9",
+    "react-hook-form": "^7.54.2",
+    "@hookform/resolvers": "^4.1.0",
+    "joi": "^17.13.3"
   },
   "devDependencies": {
     "typescript": "^5",

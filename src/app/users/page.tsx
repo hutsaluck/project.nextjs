@@ -25,12 +25,15 @@ const UsersPage = async ({ searchParams }: Props) => {
 
     const {users, total} = data
 
+    const limit = 30
+    const totalPages = Math.ceil(total / limit)
+
     return (
         <>
             <MenuComponent/>
             <SearchComponent type={'users'}/>
             <UsersComponent users={users as IUser[]}/>
-            <PaginationComponent totalPages={total} searchParams={{ page: currentPage || 1 }} />
+            <PaginationComponent totalPages={totalPages} searchParams={{ page: currentPage || 1 }} />
         </>
     );
 };

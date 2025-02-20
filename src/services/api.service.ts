@@ -36,22 +36,17 @@ axiosInstance.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                // Оновлення токену
                 const user = await getServerStorage<IUserWithTokens>("user");
-                console.log(user);
-                console.log("Current refreshToken:", user?.refreshToken); // Логування refreshToken
+                console.log("Current refreshToken:", user?.refreshToken);
 
                 if (user?.refreshToken) {
-                    // Оновлюємо токен через refresh()
                     const updatedUser = await refresh();
 
-                    // Після оновлення отримуємо нові токени
-                    // const updatedUser = getServerStorage<IUserWithTokens>("user");
-                    console.log("Updated accessToken:", updatedUser?.accessToken); // Логування нового accessToken
+                    console.log("Updated accessToken:", updatedUser?.accessToken);
 
                     if (updatedUser?.accessToken) {
                         originalRequest.headers.Authorization = `Bearer ${updatedUser.accessToken}`;
-                        return axiosInstance(originalRequest); // Повторно відправляємо запит
+                        return axiosInstance(originalRequest);
                     } else {
                         console.error("No accessToken found after refresh.");
                     }
@@ -60,11 +55,10 @@ axiosInstance.interceptors.response.use(
                 }
             } catch (err) {
                 console.error('Error during token refresh:', err);
-                return Promise.reject(error); // Повертаємо помилку, якщо не вдалося оновити токен
+                return Promise.reject(error);
             }
         }
 
-        // Якщо статус не 401 або повторна спроба вже була зроблена, передаємо помилку далі
         return Promise.reject(error);
     }
 );

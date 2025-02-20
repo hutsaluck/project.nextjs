@@ -1,7 +1,7 @@
 import {MenuComponent} from "@/components/MenuComponent";
 import {RecipesComponent} from "@/components/RecipesComponent";
 import {IRecipe} from "@/models/IRecipe";
-import {getAllRecipesWithPagination, getAllRecipesWithPaginationAndSearch, loadAuthRecipes} from "@/services/api.service";
+import {getAllRecipesWithPagination, getAllRecipesWithPaginationAndSearch} from "@/services/api.service";
 import {SearchParams} from "next/dist/server/request/search-params";
 import {PaginationComponent} from "@/components/PaginationComponent";
 import {IBaseResponseModel} from "@/models/IBaseResponseModel";
@@ -22,12 +22,15 @@ const RecipesPage = async ({ searchParams }: Props) => {
     }
     const {recipes, total} = data
 
+    const limit = 30
+    const totalPages = Math.ceil(total / limit)
+
     return (
         <>
             <MenuComponent/>
             <SearchComponent type={'recipe'}/>
             <RecipesComponent recipes={recipes as IRecipe[]}/>
-            <PaginationComponent totalPages={total} searchParams={{ page: currentPage || 1 }} />
+            <PaginationComponent totalPages={totalPages} searchParams={{ page: currentPage || 1 }} />
         </>
     );
 };

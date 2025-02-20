@@ -26,11 +26,14 @@ const RecipesTagPage = async ({ params, searchParams }: Props) => {
 
     const {recipes, total}: IBaseResponseModel = await getRecipesWithPaginationByTag(tag, currentPage);
 
+    const limit = 30
+    const totalPages = Math.ceil(total / limit)
+
     return (
         <>
             <MenuComponent/>
             <RecipesComponent recipes={recipes as IRecipe[]}/>
-            <PaginationComponent totalPages={total} searchParams={{ page: currentPage || 1 }} />
+            <PaginationComponent totalPages={totalPages} searchParams={{ page: currentPage || 1 }} />
         </>
     );
 };

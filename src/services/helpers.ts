@@ -4,11 +4,12 @@ import {cookies} from 'next/headers';
 
 export const getServerStorage = async <T>(key: string): Promise<T> => {
     const cookieStore = await cookies();
-    const value = cookieStore.get(key);
-    if (!value) {
-        return value as T;
+    const cookieKey = cookieStore.get(key);
+    if (!cookieKey) {
+        return null as T;
     }
-    return JSON.parse(value.value) as T;
+    return JSON.parse(cookieKey.value) as T;
+
 };
 
 export const setServerStorage = async <T>(key: string, value: T): Promise<void> => {
@@ -18,8 +19,6 @@ export const setServerStorage = async <T>(key: string, value: T): Promise<void> 
 
 export const removeServerStorage = async (key: string): Promise<void> => {
     const cookieStore = await cookies();
-    cookieStore.set(key, '', {
-        maxAge: 0,
-        path: '/',
-    });
+    cookieStore.delete(key);
 };
+

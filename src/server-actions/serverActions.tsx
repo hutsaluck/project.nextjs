@@ -2,16 +2,13 @@
 
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
-import {getRecipeBySearchQuery, getUserBySearchQuery, login, logout} from "@/services/api.service";
+import {login, logout} from "@/services/api.service";
 import {IUserWithTokens} from "@/models/IUserWithTokens";
 import {IUserLogin} from "@/models/IUserLogin";
 
-export const loginUser = async (data: IUserLogin) => {
+export const loginUser = async (data: IUserLogin): Promise<void> => {
     const user: IUserWithTokens = await login({...data, expiresInMins: 1})
-    // console.log(user);
-    // revalidatePath('/')
-    // redirect(`/users/${user.id}`);
-    redirect(`/users`);
+    redirect(`/users/${user.id}`);
 }
 
 export const logoutUser = async () => {
@@ -19,10 +16,13 @@ export const logoutUser = async () => {
     revalidatePath('/')
     redirect('/')
 }
-export const setSearchQuery = async (searchQuery: string, type: string) => {
-    if(type === 'user'){
-        return await getUserBySearchQuery(searchQuery)
+export const setSearchQuery = async (formData: FormData): Promise<void> => {
+    const search = String(formData.get('search'))
+    const type = String(formData.get('type'))
+
+    if(type === 'users'){
+        redirect(`/users?search=${search}`)
     } else {
-        return await getRecipeBySearchQuery(searchQuery)
+        redirect(`/recipes?search=${search}`)
     }
 }

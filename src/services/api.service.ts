@@ -20,9 +20,26 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(async (requestObject) => {
-    const user = await getServerStorage<IUserWithTokens>('user');
-    if (requestObject.method?.toUpperCase() === 'GET' && user?.accessToken) {
-        requestObject.headers.Authorization = `Bearer ${user.accessToken}`;
+    if (requestObject.method?.toUpperCase() === 'GET') {
+        const user = await getServerStorage<IUserWithTokens>('user');
+        const refreshResponse = await fetch(`http://localhost:3000/auth/`, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user: user,
+            })
+        });
+        const data = await refreshResponse.json();
+
+        if (!refreshResponse.ok) {
+            console.error("Failed to refresh token:", data.message);
+            return Promise.reject(data.message);
+        }
+
+        requestObject.headers.Authorization = `Bearer ${data.accessToken}`;
     }
     return requestObject;
 });
@@ -36,25 +53,31 @@ axiosInstance.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                const user = await getServerStorage<IUserWithTokens>("user");
-                console.log("Current refreshToken:", user?.refreshToken);
+                const user: IUserWithTokens = await getServerStorage<IUserWithTokens>("user");
+                const refreshResponse = await fetch(`http://localhost:3000/auth/`, {
+                    method: "POST",
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user: user,
+                    })
+                });
+                const data = await refreshResponse.json();
 
-                if (user?.refreshToken) {
-                    const updatedUser = await refresh();
-
-                    console.log("Updated accessToken:", updatedUser?.accessToken);
-
-                    if (updatedUser?.accessToken) {
-                        originalRequest.headers.Authorization = `Bearer ${updatedUser.accessToken}`;
-                        return axiosInstance(originalRequest);
-                    } else {
-                        console.error("No accessToken found after refresh.");
-                    }
-                } else {
-                    console.error("No refreshToken available.");
+                if (!refreshResponse.ok) {
+                    console.error("Failed to refresh token:", data.message);
+                    return Promise.reject(error);
                 }
+
+                console.log("Updated accessToken:", data.accessToken);
+
+                originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+
+                return axiosInstance(originalRequest);
             } catch (err) {
-                console.error('Error during token refresh:', err);
+                console.error("Error during token refresh:", err);
                 return Promise.reject(error);
             }
         }
@@ -99,11 +122,6 @@ export const getRecipeById = async (id: number): Promise<IRecipe> => {
     return data;
 }
 
-export const getRecipeBySearchQuery = async (searchQuery: string): Promise<IBaseResponseModel> => {
-    const {data} = await axiosInstance.get<IBaseResponseModel>(`/recipes/search?q=${searchQuery}`);
-    return data;
-}
-
 export const getRecipesWithPaginationByTag = async (tag: string, page: number): Promise<IBaseResponseModel> => {
     const limit: number = 30
     const skip: number = limit * page - limit
@@ -130,39 +148,48 @@ export const getUserById = async (id: number): Promise<IUser> => {
     return data;
 }
 
-export const getUserBySearchQuery = async (searchQuery: string): Promise<IBaseResponseModel> => {
-    const {data} = await axiosInstance.get<IBaseResponseModel>(`/users/search?q=${searchQuery}`);
-    return data;
-}
-
 export const login = async ({username, password, expiresInMins}: LoginData): Promise<IUserWithTokens> => {
     const {data: userWithTokens} = await axiosInstance.post<IUserWithTokens>("/login", {
         username,
         password,
         expiresInMins
     })
-    setServerStorage<IUserWithTokens>("user", userWithTokens);
+    await setServerStorage<IUserWithTokens>("user", userWithTokens);
     return userWithTokens
 }
 
-export const refresh = async (): Promise<IUserWithTokens> => {
-    const userWithTokens = await getServerStorage<IUserWithTokens>("user");
-    const {
-        data: {
-            accessToken,
-            refreshToken
-        }
-    } = await axiosInstance.post<ITokenPair>("/refresh", {
-        refreshToken: userWithTokens.refreshToken,
-        expiresInMins: 1
-    });
-    userWithTokens.accessToken = accessToken;
-    userWithTokens.refreshToken = refreshToken;
-    setServerStorage<IUserWithTokens>("user", userWithTokens);
+export const refresh = async (userWithTokens:IUserWithTokens|null): Promise<IUserWithTokens | null> => {
+    if(!userWithTokens){
+        userWithTokens = await getServerStorage<IUserWithTokens>("user");
+    }
 
-    return userWithTokens;
-}
+    if (!userWithTokens?.refreshToken) {
+        console.error("No refreshToken available.");
+        return null;
+    }
+
+    try {
+        const { data } = await axiosInstance.post<ITokenPair>("/refresh", {
+            refreshToken: userWithTokens.refreshToken,
+            expiresInMins: 1
+        });
+
+        if (data.accessToken && data.refreshToken) {
+            userWithTokens.accessToken = data.accessToken;
+            userWithTokens.refreshToken = data.refreshToken;
+
+            return userWithTokens;
+        } else {
+            console.error("No new tokens received from refresh endpoint.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error during token refresh:", error);
+        return null;
+    }
+};
+
 
 export const logout = async (): Promise<void> => {
-    removeServerStorage('user');
+    await removeServerStorage('user');
 }
